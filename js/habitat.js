@@ -50,6 +50,18 @@ function parseLocationHistory(locationHistory)
     return locationsToReturn;
 }
 
+function buildVehiclePolyline(vehicle)
+{
+    var positionHistoryLineString = new ol.geom.LineString(parseLocationHistory(vehicle.get("position_history")));
+    positionHistoryLineString.transform('EPSG:4326', 'EPSG:3857');
+    var positionHistoryFeature = new ol.Feature({
+        geometry: positionHistoryLineString,
+        name: 'Trajectory',
+    });
+
+    return positionHistoryFeature;
+}
+
 function getVehiclePositions(vehicleCollection)
 {
     const Http = new XMLHttpRequest();
@@ -63,9 +75,13 @@ function getVehiclePositions(vehicleCollection)
             positionEntries.positions.position.map(positionEntry => {
                 var callsign = positionEntry["vehicle"];
                 if(callsign in vehicles){
-                    vehicles[callsign].set("position_history", vehicles[callsign].position_history + positionEntry.position_id + "," + positionEntry.gps_time + "," + positionEntry.gps_lat + "," + positionEntry.gps_lon + "," + positionEntry.gps_alt + ";");
-                    if(parseInt(positionEntry.last_pid) > vehicles[callsign].last_pid)
+                    if(!vehicles[callsign].get("position_history").includes(positionEntry.position_id))
                     {
+                        vehicles[callsign].set("position_history", vehicles[callsign].get("position_history") + positionEntry.position_id + "," + positionEntry.gps_time + "," + positionEntry.gps_lat + "," + positionEntry.gps_lon + "," + positionEntry.gps_alt + ";");
+                    }
+                    if(parseInt(positionEntry.position_id) > vehicles[callsign].get("last_pid"))
+                    {
+                        console.log("Position updated for " + callsign);
                         vehicles[callsign].setGeometry(new ol.geom.Point(ol.proj.fromLonLat([positionEntry.gps_lon, positionEntry.gps_lat])));
                         vehicles[callsign].set("last_pid", parseInt(positionEntry.position_id));
                         vehicles[callsign].set("gps_time", positionEntry.gps_time);
@@ -90,23 +106,27 @@ function getVehiclePositions(vehicleCollection)
                         gps_alt: positionEntry.gps_alt,
                         display_colour: colour,
                         position_history: positionEntry.position_id + "," + positionEntry.gps_time + "," + positionEntry.gps_lat + "," + positionEntry.gps_lon + "," + positionEntry.gps_alt + ";",
+                        polyline: new ol.Feature({name: "Temporary"}),
                       });
+
                     vehicles[callsign].setStyle(getBalloonIconStyle(vehicles[callsign], callsign));
                 }
             });
             
+            console.log("Finished loading data, rebuilding polylines");
+
             for (var callsign in vehicles) {
                 var vehicle = vehicles[callsign];
+                vehicle.set("polyline", buildVehiclePolyline(vehicle));
+            }
 
-                var positionHistoryLineString = new ol.geom.LineString(parseLocationHistory(vehicle.get("position_history")));
-                positionHistoryLineString.transform('EPSG:4326', 'EPSG:3857');
-                var positionHistoryFeature = new ol.Feature({
-                    geometry: positionHistoryLineString,
-                    name: 'Trajectory',
-                });
+            console.log("Done. Updating map");
 
+            vehicleCollection.clear();
+            for (var callsign in vehicles) {
+                var vehicle = vehicles[callsign];
                 vehicleCollection.push(vehicle);
-                vehicleCollection.push(positionHistoryFeature);
+                vehicleCollection.push(vehicle.get("polyline"));
             }
 
         }
