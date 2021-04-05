@@ -65,15 +65,15 @@ function getVehiclePositions(vehicleCollection)
                 console.log("Processing position " + parseInt(positionEntry.position_id))
                 var callsign = positionEntry["vehicle"];
                 if(callsign in vehicles){
-                    vehicles[callsign]["position_history"] += positionEntry["position_id"] + "," + positionEntry["gps_time"] + "," + positionEntry["gps_lat"] + "," + positionEntry["gps_lon"] + "," + positionEntry["gps_alt"] + ";";
-                    if(parseInt(positionEntry["last_pid"]) > vehicles[callsign]["last_pid"])
+                    vehicles[callsign].position_history += positionEntry.position_id + "," + positionEntry.gps_time + "," + positionEntry.gps_lat + "," + positionEntry.gps_lon + "," + positionEntry.gps_alt + ";";
+                    if(parseInt(positionEntry.last_pid) > vehicles[callsign].last_pid)
                     {
-                        vehicles[callsign]["last_pid"] = parseInt(positionEntry["position_id"]);
-                        vehicles[callsign]["gps_time"] = positionEntry["gps_time"];
-                        vehicles[callsign]["gps_lat"] = positionEntry["gps_lat"];
-                        vehicles[callsign]["gps_lon"] = positionEntry["gps_lon"];
-                        vehicles[callsign]["gps_alt"] = positionEntry["gps_alt"];
-                        vehicles[callsign]["position_history"] += positionEntry["position_id"] + "," + positionEntry["gps_time"] + "," + positionEntry["gps_lat"] + "," + positionEntry["gps_lon"] + "," + positionEntry["gps_alt"] + ";";
+                        vehicles[callsign].last_pid = parseInt(positionEntry.position_id);
+                        vehicles[callsign].gps_time = positionEntry.gps_time;
+                        vehicles[callsign].gps_lat = positionEntry.gps_lat;
+                        vehicles[callsign].gps_lon = positionEntry.gps_lon;
+                        vehicles[callsign].gps_alt = positionEntry.gps_alt;
+                        vehicles[callsign].position_history += positionEntry.position_id + "," + positionEntry.gps_time + "," + positionEntry.gps_lat + "," + positionEntry.gps_lon + "," + positionEntry.gps_alt + ";";
                     }
                 }
                 else
@@ -82,12 +82,13 @@ function getVehiclePositions(vehicleCollection)
                     var colour = balloonIconColours[Math.floor(Math.random() * balloonIconColours.length)];
 
                     vehicles[callsign] = {
-                        "last_pid": parseInt(positionEntry["position_id"]),
-                        "gps_time": positionEntry["gps_time"],
-                        "gps_lat": positionEntry["gps_lat"],
-                        "gps_lon": positionEntry["gps_lon"],
-                        "gps_alt": positionEntry["gps_alt"],
-                        "position_history": positionEntry["position_id"] + "," + positionEntry["gps_time"] + "," + positionEntry["gps_lat"] + "," + positionEntry["gps_lon"] + "," + positionEntry["gps_alt"] + ";",
+                        "callsign": callsign,
+                        "last_pid": parseInt(positionEntry.position_id),
+                        "gps_time": positionEntry.gps_time,
+                        "gps_lat": positionEntry.gps_lat,
+                        "gps_lon": positionEntry.gps_lon,
+                        "gps_alt": positionEntry.gps_alt,
+                        "position_history": positionEntry.position_id + "," + positionEntry.gps_time + "," + positionEntry.gps_lat + "," + positionEntry.gps_lon + "," + positionEntry.gps_alt + ";",
                         "display_colour": colour,
                     }
                 }
