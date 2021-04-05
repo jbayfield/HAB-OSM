@@ -3,12 +3,13 @@ var trackerCollection = new ol.Collection();
 var map = null;
 
 function initMap(){  
-      var vectorSource = new ol.source.Vector({
+      var vehicleSource = new ol.source.Vector({
         features: vehicleCollection
       })
     
-      var vectorLayer = new ol.layer.Vector({
-        source: vectorSource,
+      var vehicleLayer = new ol.layer.Vector({
+        source: vehicleSource,
+        renderBuffer:1000000000,
       });
       
       map = new ol.Map({
@@ -17,7 +18,7 @@ function initMap(){
           new ol.layer.Tile({
             source: new ol.source.OSM()
           }),
-          vectorLayer
+          vehicleLayer
         ],
         view: new ol.View({
           center: ol.proj.fromLonLat([-0.127758, 51.507351]),
@@ -25,33 +26,33 @@ function initMap(){
         })
       });
     
-      var element = document.getElementById('popup');
-      var popup = new ol.Overlay({
-        element: element,
-        positioning: 'bottom-center',
-        stopEvent: false,
-        offset: [0, -50],
-      });
-      map.addOverlay(popup);
+      // var element = document.getElementById('popup');
+      // var popup = new ol.Overlay({
+      //   element: element,
+      //   positioning: 'bottom-center',
+      //   stopEvent: false,
+      //   offset: [0, -50],
+      // });
+      // map.addOverlay(popup);
       
-      // display popup on click
-      map.on('click', function (evt) {
-        var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
-          return feature;
-        });
-        if (feature) {
-          var coordinates = feature.getGeometry().getCoordinates();
-          popup.setPosition(coordinates);
-          $(element).popover({
-            placement: 'top',
-            html: true,
-            content: feature.get('name'),
-          });
-          $(element).popover('show');
-        } else {
-          $(element).popover('dispose');
-        }
-      });
+      // // display popup on click
+      // map.on('click', function (evt) {
+      //   var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
+      //     return feature;
+      //   });
+      //   if (feature) {
+      //     var coordinates = feature.getGeometry().getCoordinates();
+      //     popup.setPosition(coordinates);
+      //     $(element).popover({
+      //       placement: 'top',
+      //       html: true,
+      //       content: feature.get('name'),
+      //     });
+      //     $(element).popover('show');
+      //   } else {
+      //     $(element).popover('dispose');
+      //   }
+      // });
     
       // change mouse cursor when over marker
       map.on('pointermove', function (e) {
