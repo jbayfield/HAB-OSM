@@ -11,7 +11,7 @@ function getBalloonIconStyle(vehicle, callsign)
     }
     else
     {
-        marker = "balloon-" + vehicle.display_colour;
+        marker = "balloon-" + vehicle.get("display_colour");
     }
 
     var image_source = "https://tracker.habhub.org/img/markers/" + marker + ".png";
@@ -47,7 +47,6 @@ function parseLocationHistory(locationHistory)
         locationsToReturn.push([positionValues[3], positionValues[2]]);
     }
 
-    console.log(locationsToReturn);
     return locationsToReturn;
 }
 
@@ -62,18 +61,17 @@ function getVehiclePositions(vehicleCollection)
         {
             var positionEntries = JSON.parse(Http.responseText);
             positionEntries.positions.position.map(positionEntry => {
-                console.log("Processing position " + parseInt(positionEntry.position_id))
                 var callsign = positionEntry["vehicle"];
                 if(callsign in vehicles){
-                    vehicles[callsign].position_history += positionEntry.position_id + "," + positionEntry.gps_time + "," + positionEntry.gps_lat + "," + positionEntry.gps_lon + "," + positionEntry.gps_alt + ";";
+                    vehicles[callsign].set("position_history", vehicles[callsign].position_history + positionEntry.position_id + "," + positionEntry.gps_time + "," + positionEntry.gps_lat + "," + positionEntry.gps_lon + "," + positionEntry.gps_alt + ";");
                     if(parseInt(positionEntry.last_pid) > vehicles[callsign].last_pid)
                     {
-                        vehicles[callsign].last_pid = parseInt(positionEntry.position_id);
-                        vehicles[callsign].gps_time = positionEntry.gps_time;
-                        vehicles[callsign].gps_lat = positionEntry.gps_lat;
-                        vehicles[callsign].gps_lon = positionEntry.gps_lon;
-                        vehicles[callsign].gps_alt = positionEntry.gps_alt;
-                        vehicles[callsign].position_history += positionEntry.position_id + "," + positionEntry.gps_time + "," + positionEntry.gps_lat + "," + positionEntry.gps_lon + "," + positionEntry.gps_alt + ";";
+                        vehicles[callsign].setGeometry(new ol.geom.Point(ol.proj.fromLonLat([positionEntry.gps_lon, positionEntry.gps_lat])));
+                        vehicles[callsign].set("last_pid", parseInt(positionEntry.position_id));
+                        vehicles[callsign].set("gps_time", positionEntry.gps_time);
+                        vehicles[callsign].set("gps_lat", positionEntry.gps_lat);
+                        vehicles[callsign].set("gps_lon", positionEntry.gps_lon);
+                        vehicles[callsign].set("gps_alt", positionEntry.gps_alt);
                     }
                 }
                 else
@@ -81,37 +79,33 @@ function getVehiclePositions(vehicleCollection)
                     var balloonIconColours = ["red", "blue", "cyan", "green", "orange", "purple", "yellow"]
                     var colour = balloonIconColours[Math.floor(Math.random() * balloonIconColours.length)];
 
-                    vehicles[callsign] = {
-                        "callsign": callsign,
-                        "last_pid": parseInt(positionEntry.position_id),
-                        "gps_time": positionEntry.gps_time,
-                        "gps_lat": positionEntry.gps_lat,
-                        "gps_lon": positionEntry.gps_lon,
-                        "gps_alt": positionEntry.gps_alt,
-                        "position_history": positionEntry.position_id + "," + positionEntry.gps_time + "," + positionEntry.gps_lat + "," + positionEntry.gps_lon + "," + positionEntry.gps_alt + ";",
-                        "display_colour": colour,
-                    }
+                    vehicles[callsign] = new ol.Feature({
+                        geometry: new ol.geom.Point(ol.proj.fromLonLat([positionEntry.gps_lon, positionEntry.gps_lat])),
+                        name: callsign,
+                        callsign: callsign,
+                        last_pid: parseInt(positionEntry.position_id),
+                        gps_time: positionEntry.gps_time,
+                        gps_lat: positionEntry.gps_lat,
+                        gps_lon: positionEntry.gps_lon,
+                        gps_alt: positionEntry.gps_alt,
+                        display_colour: colour,
+                        position_history: positionEntry.position_id + "," + positionEntry.gps_time + "," + positionEntry.gps_lat + "," + positionEntry.gps_lon + "," + positionEntry.gps_alt + ";",
+                      });
+                    vehicles[callsign].setStyle(getBalloonIconStyle(vehicles[callsign], callsign));
                 }
-
             });
             
             for (var callsign in vehicles) {
                 var vehicle = vehicles[callsign];
-        
-                var vehicleFeature = new ol.Feature({
-                  geometry: new ol.geom.Point(ol.proj.fromLonLat([vehicle.gps_lon, vehicle.gps_lat])),
-                  name: callsign,
-                });
-                vehicleFeature.setStyle(getBalloonIconStyle(vehicle, callsign));
 
-                var positionHistoryLineString = new ol.geom.LineString(parseLocationHistory(vehicle.position_history));
+                var positionHistoryLineString = new ol.geom.LineString(parseLocationHistory(vehicle.get("position_history")));
                 positionHistoryLineString.transform('EPSG:4326', 'EPSG:3857');
                 var positionHistoryFeature = new ol.Feature({
                     geometry: positionHistoryLineString,
                     name: 'Trajectory',
                 });
 
-                vehicleCollection.push(vehicleFeature);
+                vehicleCollection.push(vehicle);
                 vehicleCollection.push(positionHistoryFeature);
             }
 
