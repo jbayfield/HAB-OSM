@@ -1,14 +1,27 @@
-var vehicleQueryURL = "https://spacenear.us/tracker/datanew.php?mode=1hour&type=positions&format=json&max_positions=0&position_id=0&vehicles=!RS_*%3B"
+var vehicleQueryURL = "https://spacenear.us/tracker/datanew.php?mode=1day&type=positions&format=json&max_positions=0&position_id=0&vehicles=!RS_*%3B"
 var vehicles = {};
 
-function getBalloonIconStyle(colour, callsign)
+function getBalloonIconStyle(vehicle, callsign)
 {
+    var marker = "balloon-cyan"
+
+    if (callsign.includes("_chase"))
+    {
+        marker = "car-blue";
+    }
+    else
+    {
+        marker = "balloon-" + vehicle.display_colour;
+    }
+
+    var image_source = "https://tracker.habhub.org/img/markers/" + marker + ".png";
+
     return new ol.style.Style({
         image: new ol.style.Icon({
             anchor: [46,160],
             anchorXUnits: 'pixels',
             anchorYUnits: 'pixels',
-            src: "https://tracker.habhub.org/img/markers/balloon-" + colour + ".png",
+            src: image_source,
             scale: 0.5,
         }),
         text: new ol.style.Text({
@@ -88,7 +101,7 @@ function getVehiclePositions(vehicleCollection)
                   geometry: new ol.geom.Point(ol.proj.fromLonLat([vehicle.gps_lon, vehicle.gps_lat])),
                   name: callsign,
                 });
-                vehicleFeature.setStyle(getBalloonIconStyle(vehicle.display_colour, callsign));
+                vehicleFeature.setStyle(getBalloonIconStyle(vehicle, callsign));
 
                 var positionHistoryLineString = new ol.geom.LineString(parseLocationHistory(vehicle.position_history));
                 positionHistoryLineString.transform('EPSG:4326', 'EPSG:3857');

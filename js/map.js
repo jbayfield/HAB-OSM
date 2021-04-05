@@ -56,10 +56,10 @@ function initMap(){
     
       // change mouse cursor when over marker
       map.on('pointermove', function (e) {
-        if (e.dragging) {
-          $(element).popover('dispose');
-          return;
-        }
+        // if (e.dragging) {
+        //   $(element).popover('dispose');
+        //   return;
+        // }
         var pixel = map.getEventPixel(e.originalEvent);
         var hit = map.hasFeatureAtPixel(pixel);
         map.getTarget().style.cursor = hit ? 'pointer' : '';
